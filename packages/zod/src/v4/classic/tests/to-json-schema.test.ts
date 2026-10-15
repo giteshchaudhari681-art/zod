@@ -606,6 +606,33 @@ describe("toJSONSchema", () => {
     }
   });
 
+  test("string includes does not emit non-standard format (#6648)", () => {
+    const schema = z.toJSONSchema(z.string().includes("foo"));
+    expect(schema).not.toHaveProperty("format");
+    expect(schema).toHaveProperty("pattern", "foo");
+  });
+
+  test("string startsWith does not emit non-standard format (#6648)", () => {
+    const schema = z.toJSONSchema(z.string().startsWith("foo"));
+    expect(schema).not.toHaveProperty("format");
+    expect(schema).toHaveProperty("pattern", "^foo.*");
+  });
+
+  test("string endsWith does not emit non-standard format (#6648)", () => {
+    const schema = z.toJSONSchema(z.string().endsWith("foo"));
+    expect(schema).not.toHaveProperty("format");
+    expect(schema).toHaveProperty("pattern", ".*foo$");
+  });
+
+  test("string formats and chained constraints preserve legitimate format (#6648)", () => {
+    expect(z.toJSONSchema(z.string().url())).toHaveProperty("format", "uri");
+    expect(z.toJSONSchema(z.string().email())).toHaveProperty("format", "email");
+    expect(z.toJSONSchema(z.string().uuid())).toHaveProperty("format", "uuid");
+
+    const chained = z.toJSONSchema(z.string().url().startsWith("https://"));
+    expect(chained).toHaveProperty("format", "uri");
+  });
+
   test("number constraints", () => {
     expect(z.toJSONSchema(z.number().min(5).max(10))).toMatchInlineSnapshot(
       `
